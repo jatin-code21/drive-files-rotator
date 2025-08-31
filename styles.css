@@ -59,11 +59,11 @@
   font-weight: 400 !important;
 }
 
-/* When we add a wrapper to control transformations */
+/* Minimal styling for rotated images */
 .gdr-rot-target {
   transform-origin: center center !important;
-  will-change: transform !important;
   transition: transform 0.3s ease !important;
+  /* Let Google Drive handle all sizing - we only handle rotation */
 }
 
 /* Avoid pointer conflicts with Google Drive UI */

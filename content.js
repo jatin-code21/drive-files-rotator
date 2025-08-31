@@ -40,16 +40,34 @@ function log(msg) {
 function saveState(fileId, state) {
   if (!fileId) return;
   const key = STORAGE_PREFIX + fileId;
-  chrome.storage.local.set({ [key]: state }).catch(() => {});
+  
+  try {
+    chrome.storage.local.set({ [key]: state }).catch((error) => {
+      log(`Storage save error: ${error.message}`);
+    });
+  } catch (error) {
+    log(`Storage API error: ${error.message}`);
+  }
 }
 
 function loadState(fileId) {
   return new Promise((resolve) => {
     if (!fileId) return resolve(null);
     const key = STORAGE_PREFIX + fileId;
-    chrome.storage.local.get(key, (obj) => {
-      resolve(obj[key] || null);
-    });
+    
+    try {
+      chrome.storage.local.get(key, (obj) => {
+        if (chrome.runtime.lastError) {
+          log(`Storage load error: ${chrome.runtime.lastError.message}`);
+          resolve(null);
+        } else {
+          resolve(obj[key] || null);
+        }
+      });
+    } catch (error) {
+      log(`Storage API error: ${error.message}`);
+      resolve(null);
+    }
   });
 }
 
@@ -150,16 +168,17 @@ function findLargestMediaElement() {
 
 function applyTransform() {
   if (!currentTarget) return;
+  
   const rotate = `rotate(${angle}deg)`;
   const flip = flipX ? " scaleX(-1)" : "";
+  
   currentTarget.classList.add("gdr-rot-target");
+  
+  // Pure rotation only - no scaling, let white corners show if needed
   currentTarget.style.transform = rotate + flip;
-  currentTarget.style.objectFit =
-    currentTarget.tagName === "VIDEO"
-      ? "contain"
-      : currentTarget.style.objectFit;
-  currentTarget.style.maxWidth = "100%";
-  currentTarget.style.maxHeight = "100%";
+  currentTarget.style.transformOrigin = "center center";
+  
+  log(`Applied pure rotation: angle=${angle}°, flipX=${flipX}`);
 }
 
 function setTarget(el) {
@@ -168,15 +187,7 @@ function setTarget(el) {
   applyTransform();
 }
 
-function updateToolbarStatus(message) {
-  const toolbar = document.getElementById(TOOLBAR_ID);
-  if (!toolbar) return;
-  
-  const statusEl = toolbar.querySelector('.gdr-status');
-  if (statusEl) {
-    statusEl.textContent = message;
-  }
-}
+// updateToolbarStatus function removed - no status messages needed
 
 function ensureToolbar() {
   if (document.getElementById(TOOLBAR_ID)) {
@@ -188,10 +199,6 @@ function ensureToolbar() {
   const bar = document.createElement("div");
   bar.id = TOOLBAR_ID;
   
-  // Show status in toolbar when no media is found
-  const isPreviewPage = isDriveFilePreviewUrl();
-  const statusText = isPreviewPage ? "Looking for media..." : "Navigate to file preview";
-  
   bar.innerHTML = `
     <button title="Rotate Left (Shift+L)" data-action="left">⟲ 90°</button>
     <button title="Rotate Right (Shift+R)" data-action="right">⟳ 90°</button>
@@ -199,8 +206,6 @@ function ensureToolbar() {
     <button title="Flip Horizontal (Shift+F)" data-action="flip">⇋ Flip</button>
     <div class="gdr-divider"></div>
     <button title="Reset (Shift+0)" data-action="reset">Reset</button>
-    <div class="gdr-divider"></div>
-    <span class="gdr-status">${statusText}</span>
   `;
   
   // Add to body instead of documentElement for better compatibility
@@ -210,6 +215,11 @@ function ensureToolbar() {
   bar.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
+    
+    if (!currentTarget) {
+      return;
+    }
+    
     const action = btn.getAttribute("data-action");
     if (action === "left") angle = (angle - 90 + 360) % 360;
     if (action === "right") angle = (angle + 90) % 360;
@@ -218,6 +228,7 @@ function ensureToolbar() {
       angle = 0;
       flipX = false;
     }
+    
     applyTransform();
     saveState(currentFileId, { angle, flipX });
   });
@@ -255,7 +266,7 @@ function ensureToolbar() {
   });
 }
 
-// Load saved rotation state for current file
+// Load saved rotation state for current file (only when user explicitly rotates)
 async function loadRotationState() {
   if (!currentFileId) return;
   
@@ -264,10 +275,8 @@ async function loadRotationState() {
   flipX = saved?.flipX ?? false;
   log(`Loaded rotation state - angle: ${angle}, flipX: ${flipX}`);
   
-  // Apply to current target if we have one
-  if (currentTarget) {
-    applyTransform();
-  }
+  // DON'T auto-apply on load - wait for user interaction
+  // This prevents auto-rotation when page loads
 }
 
 function teardown() {
@@ -320,14 +329,12 @@ async function initOnDrive() {
     const el = findLargestMediaElement();
     if (el && el !== currentTarget) {
       log("Found new media element, setting as target");
-      setTarget(el);
-      updateToolbarStatus("Media found - Ready to rotate!");
+      currentTarget = el; // Set target but DON'T apply transform yet
+      
+      // Media found - no status message needed
     } else if (!el) {
       if (initAttempts <= 3) {
-        updateToolbarStatus(`Searching for media... (${initAttempts})`);
         setTimeout(assignTarget, 1000); // Keep trying
-      } else {
-        updateToolbarStatus("No media found - click on image/video");
       }
     }
   }, 300);
