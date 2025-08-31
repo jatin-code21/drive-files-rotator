@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Drive Rotate Viewer",
+  "version": "1.0.0",
+  "description": "Rotate images and videos directly in Google Drive preview.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://drive.google.com/*"],
+  "icons": {
+    "16": "icons/rotate.png",
+    "48": "icons/rotate.png",
+    "128": "icons/rotate.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*.png"],
+      "matches": ["https://drive.google.com/*"]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://drive.google.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_end",
+      "all_frames": false
+    }
+  ]
+}

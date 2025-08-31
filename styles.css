@@ -1,0 +1,78 @@
+/* Toolbar container */
+#gdr-rotator-toolbar {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 2147483647 !important; /* above everything */
+  display: flex !important;
+  gap: 6px !important;
+  align-items: center !important;
+  padding: 8px 10px !important;
+  border-radius: 9999px !important;
+  background: rgba(32, 33, 36, 0.95) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(8px) !important;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji" !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+#gdr-rotator-toolbar button {
+  border: 0 !important;
+  outline: none !important;
+  background: #fff !important;
+  color: #111 !important;
+  border-radius: 9999px !important;
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+  user-select: none !important;
+}
+
+#gdr-rotator-toolbar button:hover {
+  background: #f0f0f0 !important;
+  transform: scale(1.05) !important;
+}
+
+#gdr-rotator-toolbar button:active {
+  transform: scale(0.95) !important;
+}
+
+#gdr-rotator-toolbar .gdr-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.35);
+  margin: 0 4px;
+}
+
+#gdr-rotator-toolbar .gdr-status {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 11px !important;
+  padding: 0 6px !important;
+  white-space: nowrap !important;
+  font-weight: 400 !important;
+}
+
+/* When we add a wrapper to control transformations */
+.gdr-rot-target {
+  transform-origin: center center !important;
+  will-change: transform !important;
+  transition: transform 0.3s ease !important;
+}
+
+/* Avoid pointer conflicts with Google Drive UI */
+#gdr-rotator-toolbar,
+#gdr-rotator-toolbar * {
+  pointer-events: auto !important;
+}
+
+/* Ensure toolbar is always visible */
+#gdr-rotator-toolbar {
+  box-sizing: border-box !important;
+}
